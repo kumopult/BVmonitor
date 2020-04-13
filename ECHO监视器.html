@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="referrer" content="no-referrer" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>ECHO监视器</title>
+		<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+		<script>
+			/**
+			 * Created by GYFlasher on 2017-12-08.
+			 */
+			/**
+			 * 滚动数字 (依赖jq)
+			 * @param el 用来显示滚动字幕的容器class 或 id
+			 * @param option 配置参数 width: 数字的宽 (无单位),fontSize: 字体大小（无单位）, color: 文字颜色,autoSizeContainerWidth: 自动计算容器宽度
+			 * @returns {Object}
+			 */
+			function gScrollNumber(el,option) {
+			    this.container = $(el);
+			    this.option = option;
+			    this.container.css({
+			        position: "relative",
+			        padding: "0",
+			        overflow: "hidden"
+			    });
+			    var height = this.container.height();
+			    this.subWidth = option.width;
+			    this.subHeight = height;
+			    this.autoSizeContainerWidth = option.autoSizeContainerWidth;
+			    this.col = '<span class="g-num-item" style="top: 0;">' +
+			        '<i>0</i>' +
+			        '<i>1</i>' +
+			        '<i>2</i>' +
+			        '<i>3</i>' +
+			        '<i>4</i>' +
+			        '<i>5</i>' +
+			        '<i>6</i>' +
+			        '<i>7</i>' +
+			        '<i>8</i>' +
+			        '<i>9</i>' +
+			        '<i>.</i>' +
+			        '</span>';
+			}
+			gScrollNumber.prototype.run = function (value) {
+			    console.log("old = " + this.currentValue + "\nnew = " + value);
+			    this.currentValue = value;
+			    var self = this;
+			    var valueString = value.toString();
+			    if (self.autoSizeContainerWidth) {
+			        self.container.css({
+			            "width": valueString.length * self.subWidth + "px"
+			        });
+			    }
+			    var oldLength = self.container.children(".g-num-item").length;
+			
+			    if (valueString.length > oldLength) {
+			        for (var i = 0; i < valueString.length - oldLength; i++) {
+			            self.container.append(self.col);
+			            self.container.children(".g-num-item").eq(oldLength + i).css({
+			                right: self.subWidth * (oldLength + i) + "px"
+			            });
+			        }
+			    }else if (valueString.length < oldLength) {
+			        for (var i = 0; i < oldLength - valueString.length; i++) {
+			            self.container.children(".g-num-item:last").remove();
+			        }
+			    }
+			    $(".g-num-item").css({
+			        position: "absolute",
+			        width: self.subWidth + "px",
+			        height: 11 * self.subHeight + "px"
+			    });
+			    $(".g-num-item i").css({
+			        width: self.subWidth + "px",
+			        height: self.subHeight + "px",
+			        lineHeight: self.subHeight + "px",
+			        textAlign: "center",
+			        fontSize: self.option.fontSize + "px",
+			        color: self.option.color,
+			        display: "block",
+			        fontStyle: "normal"
+			    });
+			    setTimeout(function () {
+			        if (valueString.length !== self.container.children(".g-num-item").length) {
+			            console.log("%c%s","color:red;", "数字位数和数字条个数不相等");
+			            debugger
+			        }
+			        for (var i = 0; i < valueString.length; i++) {
+			            var y = 0;
+			            if (valueString[i] != ".") {
+			                y = - (parseInt(valueString[i]) * self.subHeight);
+			            }else {
+			                y = - (10 * self.subHeight);
+			            }
+			            // console.log(self.container.attr("class") + " / " + self.container.attr("id") + " : " +valueString);
+			            self.container.children(".g-num-item").eq(valueString.length - i - 1).css({
+			                top: y + "px",
+			                transition: "top 1.0s"
+			            })
+			        }
+			    }, 0);
+			};
+			gScrollNumber.prototype.getCurrentValue = function () {
+			    return this.currentValue;
+			};
+		</script>
+		<style>
+			.block{
+				display: inline-flex;
+				height: 160px;
+				width: 800px;
+			}
+			.block-pic{
+				height: 160px;
+				width: 256px;
+			}
+			.block-data{
+				height: 160px;
+				width: 544px;
+			}
+			.des-text{
+				font-size: 2em;
+				font-weight: bold;
+				color: white;
+				text-align: center;
+				height: 60px;
+				width: 544px;
+			}
+			.des-text.shadow{
+				 -webkit-text-stroke: 3px darkblue;
+				position: absolute;
+				margin-top: 0;
+				z-index: -1;
+			}
+			.play-num{
+				font-weight: bold;
+				color: white;
+				text-shadow:
+				#5E84F1 -2px 2px 0,
+				#5E84F1 2px 2px 0,
+				#5E84F1 -2px -2px 0,
+				#5E84F1 2px -2px 0;
+				height: 100px;
+				margin: 0 auto;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="block">
+			<div class="block-pic">
+				<img class="block-pic" src='https://i0.hdslb.com/bfs/archive/a9759fb956dea7dd8ba03d5a3483d565a14e413f.jpg' />
+			</div>
+			<div class="block-data">
+				<div class="des-text shadow">ECHO(av67319491)当前播放量：</div>
+				<div class="des-text">ECHO(av67319491)当前播放量：</div>
+				<div id="view" class="play-num"></div>
+			</div>
+		</div>
+		<script>
+		    $(document).ready(function(){
+				var viewscroll = new gScrollNumber("#view", {
+				   width: 70, // 每个数字元素的宽
+				   fontSize: 80, // 数字元素的字体大小
+				   autoSizeContainerWidth: true // 自动计算容器宽度 .scroll-number-0 ，如果已经使用css 制定了容器的宽度，此处可设置为false
+				});
+		        function refresh(){
+		            $.ajax({
+		            	type:'get',//HTTP请求类型
+						url:'https://api.kaaass.net/biliapi/video/info',
+		            	data:{
+		            		'bid':'BV1YJ411K7YZ'
+		            	},
+		            	dataType:'jsonp',//服务器返回json格式数据
+		            	timeout:10000,//超时时间设置为10秒；
+		            	success:function(data){
+							view = data['data']['play'];
+							viewscroll.run(view);
+		            		//$("#view").html(view);
+		            	},
+		            	error:function(xhr,type,errorThrown){
+		            		
+		            	}
+		            });
+		        }
+				refresh();
+		        setInterval(refresh, 10000);
+		    })
+		</script>
+	</body>
+</html>
